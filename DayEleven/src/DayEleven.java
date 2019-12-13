@@ -111,7 +111,15 @@ public class DayEleven {
     }
   }
 
-  public static void printGrid(HashMap<Position, Long> panels) {
+  /*
+   * For each axis (x and y), we find the min and the max. Assuming the min is negative,
+   * taking the absolute gives us the translation required to get the origin. The origin
+   * is 0,0. The length of each axis is max + abs(min), max - min? 
+   * Create the grid using these deminsions, then fill each panel with black (default).
+   * Given the HashMap of colours position : colour. Loop through the hash map, translate 
+   * the position by the min x and min y, and set the colour. Then print.
+   */
+public static void printGrid(HashMap<Position, Long> panels) {
     int maxX = Integer.MIN_VALUE;
     int minX = Integer.MAX_VALUE;
     int maxY = Integer.MIN_VALUE;
