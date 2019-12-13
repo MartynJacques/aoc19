@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,21 +39,36 @@ public class DayTen {
       return this.x == other.x && this.y == other.y;
     }
 
-    public double angleFromXClockwise(Position p) {
-      Position c = new Position(p.x, 0);
-      double hd = Math.sqrt(Math.pow(p.x-this.x, 2) + Math.pow(p.y-this.y, 2));
-      double od = Math.sqrt(Math.pow(c.x-p.x, 2) + Math.pow(c.y-p.y, 2));
-      double angle = Math.asin(od / hd);
-      if (p.x > this.x && p.y > this.y) {
-        angle = 180 - angle;
+    public BigDecimal angleFromXClockwise(Position p) {
+      Position c = new Position(p.x, this.y);
+      double angle;
+      if (p.x == this.x) {
+        if (this.y < p.y) {
+          angle = 180.0;
+        } else {
+          angle = 306.0;
+        }
+      } else if (p.y == this.y) {
+        if (this.x < p.x) {
+          angle = 90.0;
+        } else {
+          angle = 270.0;
+        }
+      } else {
+        double hd = Math.sqrt(Math.pow(p.x - this.x, 2) + Math.pow(p.y - this.y, 2));
+        double od = Math.sqrt(Math.pow(c.x - p.x, 2) + Math.pow(c.y - p.y, 2));
+        angle = Math.asin(od / hd);
+        if (p.x > this.x && p.y > this.y) {
+          angle = 180 - angle;
+        }
+        if (p.x > this.x && p.y < this.y) {
+          angle = 180 + angle;
+        }
+        if (p.x < this.x && p.y < this.y) {
+          angle = 360 - angle;
+        }
       }
-      if (p.x > this.x && p.y < this.y) {
-        angle = 180 + angle;
-      }
-      if (p.x < this.x && p.y < this.y) {
-        angle = 360 - angle;
-      }
-      return angle;
+      return new BigDecimal(angle).setScale(5, BigDecimal.ROUND_HALF_UP);
     }
 
     @Override
@@ -65,7 +79,7 @@ public class DayTen {
 
   public static char[][] getGridFromInput() throws Exception {
     BufferedReader br = new BufferedReader(
-        new FileReader("/Users/marjac01/Development/AdventOfCode/DayTen/src/testinput.txt"));
+        new FileReader("/Users/marjac01/Development/AdventOfCode/DayTen/src/input.txt"));
     ArrayList<String> lines = new ArrayList<String>();
     String line = null;
     while ((line = br.readLine()) != null) {
@@ -126,16 +140,13 @@ public class DayTen {
   public static int findBestSatellite(ArrayList<Position> s) {
     int max = Integer.MIN_VALUE;
     for (Position p : s) {
-      Set<Double> gradients = new HashSet<>();
-      System.out.println(p);
+      Set<BigDecimal> gradients = new HashSet<>();
       for (Position otherP : s) {
         if (!p.equals(otherP)) {
-          Double gradient = p.angleFromXClockwise(otherP);
+          BigDecimal gradient = p.angleFromXClockwise(otherP);
           gradients.add(gradient);
         }
       }
-      System.out.println(Arrays.toString(gradients.toArray()));
-      System.out.println(gradients.size());
       if (gradients.size() > max) {
         max = gradients.size();
       }
