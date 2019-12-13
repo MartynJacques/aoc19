@@ -1,18 +1,6 @@
 import java.util.Arrays;
 import java.util.HashMap;
 
-//    // Initialise grid
-//    char[][] grid = new char[5][5];
-//    for (int i = 0; i < grid.length; i++) {
-//      for (int j = 0; j < grid[i].length; j++) {
-//        grid[i][j] = '.';
-//      }
-//    }
-
-//    testMap.entrySet().forEach(entry -> {
-//      System.out.println(entry.getKey() + " " + entry.getValue());
-//    });
-
 public class DayEleven {
 
   public static final long BLACK = 0;
