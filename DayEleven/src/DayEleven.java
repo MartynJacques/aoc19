@@ -137,22 +137,14 @@ public class DayEleven {
       if (robot.halted)
         break; // Halt signal, exit the loop
 
-      // Paint the new colour i.e. store the new colour, white = 1, black = 0
-      if (robot.output != BLACK && robot.output != WHITE) {
-        System.err.println("Error with intcode output, unknown colour " + robot.output);
-        System.exit(1);
-      }
-      panels.put(p, robot.output);
+      // Put a new position in the map, to avoid a pointer to the same object
+      panels.put(new Position(p.x, p.y), robot.output);
 
       // Get the next rotation, right = 1, left = 0
       robot.inputs.add(currCol);
       robot.run();
       if (robot.halted)
         break; // Halt signal, exit the loop
-      if (robot.output != TURN_LEFT && robot.output != TURN_RIGHT) {
-        System.err.println("Error with intcode output, unknown direction " + robot.output);
-        System.exit(1);
-      }
       d = robot.output == TURN_LEFT ? Direction.turnLeft(d) : Direction.turnRight(d);
 
       // Move to next panel, i.e. move forward by one in new direction
@@ -160,7 +152,6 @@ public class DayEleven {
     }
     System.out.println(panels.size());
   }
-
 
   public static void main(String[] args) {
     String[] input =
