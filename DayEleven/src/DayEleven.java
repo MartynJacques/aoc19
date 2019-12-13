@@ -9,179 +9,16 @@ import java.util.HashMap;
 //      }
 //    }
 
+//    testMap.entrySet().forEach(entry -> {
+//      System.out.println(entry.getKey() + " " + entry.getValue());
+//    });
+
 public class DayEleven {
-  public static final int POS = 0; // Position mode
-  public static final int IMM = 1; // Immediate mode
-  public static final int REL = 2; // Relative mode
   
   public static final long BLACK = 0;
   public static final long WHITE = 1;
   public static final long TURN_LEFT = 0;
   public static final long TURN_RIGHT = 1;
-
-  public static class IntCodeParams {
-    public long result = 0;
-    public int pc = 0;
-    public int rb = 0;
-    public boolean hasHalted = false;
-  }
-
-  public static class Instruction {
-    public String opcode;
-    public int[] modes;
-
-    public Instruction(String instStr) {
-      String strModes = null;
-      if (instStr.length() == 1) {
-        opcode = "0" + instStr;
-      } else {
-        opcode = instStr.substring(instStr.length() - 2, instStr.length());
-        strModes = instStr.substring(0, instStr.length() - 2);
-      }
-      modes = setModes(opcode, strModes);
-    }
-
-    public int[] setModes(String opcode, String modesStr) {
-      if (opcode.contentEquals("99")) {
-        return null;
-      }
-      int[] modes = new int[getNumOperands()];
-      if (modesStr == null)
-        return modes;
-      for (int i = modesStr.length() - 1; i >= 0; i--) {
-        modes[modesStr.length() - 1 - i] = Character.getNumericValue(modesStr.charAt(i));
-      }
-      return modes;
-    }
-
-    public int getNumOperands() {
-      switch (opcode) {
-        case "01":
-        case "02":
-        case "07":
-        case "08":
-          return 3;
-        case "05":
-        case "06":
-          return 2;
-        case "03":
-        case "04":
-        case "09":
-          return 1;
-        case "99":
-        default:
-          System.err.println("Somethings gone wrong in getNumOperands. Opcode: " + opcode);
-          return -1;
-      }
-    }
-  }
-
-
-  public static int[] getAddresses(int[] modes, int pc, long[] program, int rb) {
-    int[] addresses = new int[modes.length];
-    for (int i = 0; i < modes.length; i++) {
-      int mode = modes[i];
-      switch (mode) {
-        case POS:
-          addresses[i] = (int) program[pc + i + 1];
-          break;
-        case IMM:
-          addresses[i] = pc + i + 1;
-          break;
-        case REL:
-          addresses[i] = (int) program[pc + i + 1] + rb;
-          break;
-        default:
-          System.err.println("Somethings gone wrong in getAddresses. Unknown mode: " + mode);
-          System.exit(1);
-      }
-    }
-    return addresses;
-  }
-
-  public static void run(long[] program, long input, IntCodeParams icr) {
-    // Initialise memory
-    long[] memory = new long[program.length * 100];
-    for (int i = 0; i < program.length; i++) {
-      memory[i] = program[i];
-    }
-    program = memory;
-    
-    while (icr.pc < memory.length) {
-      Instruction in = new Instruction(Long.toString(program[icr.pc]));
-      String opcode = in.opcode;
-      if (opcode.contentEquals("99")) {
-        System.out.println("Instruction 99, halting.");
-        icr.hasHalted = true;
-        return;
-      }
-      int[] modes = in.modes;
-      int[] addresses = getAddresses(modes, icr.pc, program, icr.rb);
-      if (in.getNumOperands() == 3) {
-        // Three operands
-        int firstParamAdd = addresses[0];
-        int secondParamAdd = addresses[1];
-        int thirdParamAdd = addresses[2];
-
-        if (opcode.contentEquals("01")) {
-          program[thirdParamAdd] = program[firstParamAdd] + program[secondParamAdd];
-        } else if (opcode.contentEquals("02")) {
-          program[thirdParamAdd] = program[firstParamAdd] * program[secondParamAdd];
-        } else if (opcode.contentEquals("07")) {
-          if (program[firstParamAdd] < program[secondParamAdd]) {
-            program[thirdParamAdd] = 1;
-          } else {
-            program[thirdParamAdd] = 0;
-          }
-        } else if (opcode.contentEquals("08")) {
-          if (program[firstParamAdd] == program[secondParamAdd]) {
-            program[thirdParamAdd] = 1;
-          } else {
-            program[thirdParamAdd] = 0;
-          }
-        }
-        icr.pc += 4;
-      } else if (in.getNumOperands() == 2) {
-        // Two operands
-        int firstParamAdd = addresses[0];
-        int secondParamAdd = addresses[1];
-        if (opcode.contentEquals("05")) {
-          if (program[firstParamAdd] != 0) {
-            icr.pc = (int) program[secondParamAdd];
-          } else {
-            icr.pc += 3;
-          }
-        } else if (opcode.contentEquals("06")) {
-          if (program[firstParamAdd] == 0) {
-            icr.pc = (int) program[secondParamAdd];
-          } else {
-            icr.pc += 3;
-          }
-        }
-      } else if (in.getNumOperands() == 1) {
-        // One operand
-        if (opcode.contentEquals("03")) {
-          // Input
-          program[addresses[0]] = input;
-          icr.pc += 2;
-        } else if (opcode.contentEquals("04")) {
-          // Output 
-          icr.result = program[addresses[0]];
-          icr.pc += 2;
-          return;
-        } else if (opcode.contentEquals("09")) {
-          // Relative base adjust 
-          icr.rb += program[addresses[0]];
-          icr.pc += 2;
-        }
-      } else {
-        // Error
-        System.out.println("Unsupported number of operands " + in.getNumOperands() + "Opcode is "
-            + opcode + ". Exiting.");
-        System.exit(1);
-      }
-    }
-  }
 
   public enum Direction {
     UP, RIGHT, LEFT, DOWN;
@@ -289,40 +126,38 @@ public class DayEleven {
     // Initialise, start at 0,0 facing UP
     Position p = new Position(0, 0);
     Direction d = Direction.UP;
-    IntCodeParams icr = new IntCodeParams();
+    IntCode robot = new IntCode(program);
     while (true) {
       // Get colour of current panel, default is black, white = 1, black = 0
       long currCol = panels.containsKey(p) ? panels.get(p) : BLACK;
 
       // Get the colour the panel should be painted with
-      run(program, currCol, icr);
-      if (icr.hasHalted)
+      robot.inputs.add(currCol);
+      robot.run();
+      if (robot.halted)
         break; // Halt signal, exit the loop
 
       // Paint the new colour i.e. store the new colour, white = 1, black = 0
-      if (icr.result != BLACK && icr.result != WHITE) {
-        System.err.println("Error with intcode output, unknown colour " + icr.result);
+      if (robot.output != BLACK && robot.output != WHITE) {
+        System.err.println("Error with intcode output, unknown colour " + robot.output);
         System.exit(1);
       }
-      panels.put(p, icr.result);
+      panels.put(p, robot.output);
 
       // Get the next rotation, right = 1, left = 0
-      run(program, currCol, icr);
-      if (icr.hasHalted)
+      robot.inputs.add(currCol);
+      robot.run();
+      if (robot.halted)
         break; // Halt signal, exit the loop
-      if (icr.result != TURN_LEFT && icr.result != TURN_RIGHT) {
-        System.err.println("Error with intcode output, unknown direction " + icr.result);
+      if (robot.output != TURN_LEFT && robot.output != TURN_RIGHT) {
+        System.err.println("Error with intcode output, unknown direction " + robot.output);
         System.exit(1);
       }
-      d = icr.result == TURN_LEFT ? Direction.turnLeft(d) : Direction.turnRight(d);
+      d = robot.output == TURN_LEFT ? Direction.turnLeft(d) : Direction.turnRight(d);
 
       // Move to next panel, i.e. move forward by one in new direction
       p.move(d);
-      //      panels.entrySet().forEach(entry -> {
-      //        System.out.println(entry.getKey() + " " + entry.getValue());
-      //      });
     }
-    System.out.println(icr.result);
     System.out.println(panels.size());
   }
 
