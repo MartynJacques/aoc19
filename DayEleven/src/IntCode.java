@@ -62,6 +62,7 @@ public class IntCode {
   public long output;
   public boolean halted;
   public int pc;
+  public int rb;
   public Stack<Long> inputs;
 
   public IntCode(long[] program) {
@@ -72,6 +73,7 @@ public class IntCode {
     }
     this.halted = false;
     this.pc = 0;
+    this.rb = 0;
     this.inputs = new Stack<>();
     this.output = 0;
   }
@@ -99,7 +101,6 @@ public class IntCode {
   }
 
   public void run() {
-    int rb = 0;
     while (pc < memory.length) {
       Instruction in = new Instruction(Long.toString(memory[pc]));
       String opcode = in.opcode;
@@ -163,7 +164,7 @@ public class IntCode {
           pc += 2;
           return;
         } else if (opcode.contentEquals("09")) {
-          // Output 
+          // Relative base adjust 
           rb += memory[addresses[0]];
           pc += 2;
         }
