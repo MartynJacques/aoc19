@@ -1,11 +1,17 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 public class DayTen {
+
+  public static class Gradient {
+    int dx;
+    int dy;
+  }
 
   public static class Position {
     public int x;
@@ -34,21 +40,32 @@ public class DayTen {
       return this.x == other.x && this.y == other.y;
     }
 
+    public double angleFromXClockwise(Position p) {
+      Position c = new Position(p.x, 0);
+      double hd = Math.sqrt(Math.pow(p.x-this.x, 2) + Math.pow(p.y-this.y, 2));
+      double od = Math.sqrt(Math.pow(c.x-p.x, 2) + Math.pow(c.y-p.y, 2));
+      double angle = Math.asin(od / hd);
+      if (p.x > this.x && p.y > this.y) {
+        angle = 180 - angle;
+      }
+      if (p.x > this.x && p.y < this.y) {
+        angle = 180 + angle;
+      }
+      if (p.x < this.x && p.y < this.y) {
+        angle = 360 - angle;
+      }
+      return angle;
+    }
+
     @Override
     public String toString() {
       return "(" + x + ", " + y + ")";
     }
   }
 
-  public static double gradient(Position a, Position b) {
-    int yDiff = a.y - b.y;
-    int xDiff = a.x - b.x;
-    return (double) yDiff / xDiff;
-  }
-
   public static char[][] getGridFromInput() throws Exception {
     BufferedReader br = new BufferedReader(
-        new FileReader("/Users/marjac01/Development/AdventOfCode/DayTen/src/input.txt"));
+        new FileReader("/Users/marjac01/Development/AdventOfCode/DayTen/src/testinput.txt"));
     ArrayList<String> lines = new ArrayList<String>();
     String line = null;
     while ((line = br.readLine()) != null) {
@@ -110,12 +127,15 @@ public class DayTen {
     int max = Integer.MIN_VALUE;
     for (Position p : s) {
       Set<Double> gradients = new HashSet<>();
+      System.out.println(p);
       for (Position otherP : s) {
-        if (p.equals(otherP))
-          break;
-        double gradient = gradient(p, otherP);
-        gradients.add(gradient);
+        if (!p.equals(otherP)) {
+          Double gradient = p.angleFromXClockwise(otherP);
+          gradients.add(gradient);
+        }
       }
+      System.out.println(Arrays.toString(gradients.toArray()));
+      System.out.println(gradients.size());
       if (gradients.size() > max) {
         max = gradients.size();
       }
@@ -126,7 +146,7 @@ public class DayTen {
   public static void partOne() throws Exception {
     char[][] grid = getGridFromInput();
     ArrayList<Position> s = getSatellitePositions(grid);
-    System.out.println(Arrays.toString(s.toArray()));
+    //    System.out.println(Arrays.toString(s.toArray()));
     int maxAsteroidsDetectable = findBestSatellite(s);
     System.out.println(maxAsteroidsDetectable);
   }
