@@ -119,7 +119,7 @@ public class DayEleven {
    * Given the HashMap of colours position : colour. Loop through the hash map, translate 
    * the position by the min x and min y, and set the colour. Then print.
    */
-public static void printGrid(HashMap<Position, Long> panels) {
+  public static void printGrid(HashMap<Position, Long> panels) {
     int maxX = Integer.MIN_VALUE;
     int minX = Integer.MAX_VALUE;
     int maxY = Integer.MIN_VALUE;
