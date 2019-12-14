@@ -2,15 +2,12 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 public class DayTen {
-
-  public static class Gradient {
-    int dx;
-    int dy;
-  }
 
   public static class Position {
     public int x;
@@ -40,35 +37,35 @@ public class DayTen {
     }
 
     public BigDecimal angleFromXClockwise(Position p) {
-      Position c = new Position(p.x, this.y);
+      Position c = new Position(this.x, p.y);
       double angle;
       if (p.x == this.x) {
         if (this.y < p.y) {
-          angle = 180.0;
+          angle = 180;
         } else {
-          angle = 306.0;
+          angle = 360;
         }
       } else if (p.y == this.y) {
         if (this.x < p.x) {
-          angle = 90.0;
+          angle = 270;
         } else {
-          angle = 270.0;
+          angle = 90;
         }
       } else {
         double hd = Math.sqrt(Math.pow(p.x - this.x, 2) + Math.pow(p.y - this.y, 2));
         double od = Math.sqrt(Math.pow(c.x - p.x, 2) + Math.pow(c.y - p.y, 2));
-        angle = Math.asin(od / hd);
+        angle = Math.toDegrees(Math.asin(od / hd));
         if (p.x > this.x && p.y > this.y) {
-          angle = 180 - angle;
-        }
-        if (p.x > this.x && p.y < this.y) {
           angle = 180 + angle;
         }
-        if (p.x < this.x && p.y < this.y) {
-          angle = 360 - angle;
+        if (p.x > this.x && p.y < this.y) {
+          angle = 270 + angle;
+        }
+        if (p.x < this.x && p.y > this.y) {
+          angle = 90 + angle;
         }
       }
-      return new BigDecimal(angle).setScale(5, BigDecimal.ROUND_HALF_UP);
+      return new BigDecimal(angle).setScale(2, BigDecimal.ROUND_HALF_UP);
     }
 
     @Override
@@ -118,26 +115,13 @@ public class DayTen {
   }
 
   /*
-   * max = int.min
-   * bestSatelite = null
-   * For each satelite, s
-   *    for every other satelite, s'
-   *        line = line between s and s' 
-   *        find gradient of line
-   *        add to hash map (gradient : sateliteList)
-   *    numVis = number of visible satelites is size(hashmap)
-   *    because only one satelite is visible that has the same gradient
-   *    because one satelite is blocking the rest
-   *    this will be the one closest to s, but we don't need to know that
-   *    at least for part one
-   *    if numVis > max
-   *        max = numVis
-   *        bestSatelite = s
-   *        
-   *    The number of visible satelites is the number of unique gradients 
-   *    between current satelite and other satelites.
+   * For each satelite, find the angle between itself and every other satelite 
+   * any duplicate angles, those asteroids can be ignored, so we use a set to 
+   * add angles to, and return the size of the set
+   * i.e. num satellites == num of unique angles
+   * find the max 
    */
-  public static int findBestSatellite(ArrayList<Position> s) {
+  public static int findMaxSatellite(ArrayList<Position> s) {
     int max = Integer.MIN_VALUE;
     for (Position p : s) {
       Set<BigDecimal> gradients = new HashSet<>();
@@ -154,15 +138,114 @@ public class DayTen {
     return max;
   }
 
+  public static Position findBestSatellite(ArrayList<Position> s) {
+    int max = Integer.MIN_VALUE;
+    Position bestP = null;
+    for (Position p : s) {
+      Set<BigDecimal> gradients = new HashSet<>();
+      for (Position otherP : s) {
+        if (!p.equals(otherP)) {
+          BigDecimal gradient = p.angleFromXClockwise(otherP);
+          gradients.add(gradient);
+        }
+      }
+      if (gradients.size() > max) {
+        max = gradients.size();
+        bestP = p;
+      }
+    }
+    return bestP;
+  }
+
+  public static Position findClosestPosition(Position origin, ArrayList<Position> positions) {
+    double min = Double.MAX_VALUE;
+    Position closest = null;
+    for (Position p : positions) {
+      double dist = Math.sqrt(Math.pow(origin.x - p.x, 2) + Math.pow(origin.y - p.y, 2));
+      if (dist < min) {
+        min = dist;
+        closest = p;
+      }
+    }
+    return closest;
+  }
+
+  public static Position find200Vapourised(Position p, ArrayList<Position> other) {
+    HashMap<BigDecimal, ArrayList<Position>> gradientPositions = new HashMap<>();
+    for (Position otherP : other) {
+      if (!p.equals(otherP)) {
+        BigDecimal gradient = p.angleFromXClockwise(otherP);
+        if (gradientPositions.containsKey(gradient)) {
+          gradientPositions.get(gradient).add(otherP);
+        } else {
+          ArrayList<Position> pList = new ArrayList<>();
+          pList.add(otherP);
+          gradientPositions.put(gradient, pList);
+        }
+      }
+    }
+
+    //    gradientPositions.entrySet().forEach(entry -> {
+    //      System.out.println(entry.getKey() + " " + entry.getValue());
+    //    });
+    ArrayList<BigDecimal> gList = new ArrayList<>();
+    for (BigDecimal bd : gradientPositions.keySet()) {
+      gList.add(bd);
+    }
+    Collections.sort(gList);
+
+    int index = 0;
+    for (int i = 0; i < gList.size(); i++) {
+      if (gList.get(i).doubleValue() == 90) {
+        index = i;
+      }
+    }
+    int removed = 0;
+    int i = index;
+    while (!gradientPositions.isEmpty()) {
+      if (gradientPositions.containsKey(gList.get(i))) {
+        ArrayList<Position> positionsAtAngle = gradientPositions.get(gList.get(i));
+        if (positionsAtAngle.isEmpty()) {
+          continue;
+        }
+        Position closest = findClosestPosition(p, positionsAtAngle);
+        positionsAtAngle.remove(closest);
+        removed++;
+        if (removed == 200) {
+          return closest;
+        }
+        if (positionsAtAngle.isEmpty()) {
+          gradientPositions.remove(gList.get(i));
+        }
+      }
+      i++;
+      if (i == gList.size()) {
+        i = 0;
+      }
+    }
+    return null;
+  }
+
   public static void partOne() throws Exception {
     char[][] grid = getGridFromInput();
     ArrayList<Position> s = getSatellitePositions(grid);
     //    System.out.println(Arrays.toString(s.toArray()));
-    int maxAsteroidsDetectable = findBestSatellite(s);
+    int maxAsteroidsDetectable = findMaxSatellite(s);
+    Position bestP = findBestSatellite(s);
     System.out.println(maxAsteroidsDetectable);
+    System.out.println(bestP);
+  }
+
+  public static void partTwo() throws Exception {
+    char[][] grid = getGridFromInput();
+    ArrayList<Position> s = getSatellitePositions(grid);
+    Position bestP = findBestSatellite(s);
+    Position vaporised200th = find200Vapourised(bestP, s);
+    System.out.println((100 * vaporised200th.x) + vaporised200th.y);
   }
 
   public static void main(String[] args) throws Exception {
-    partOne();
+    //    partOne();
+    partTwo();
   }
 }
